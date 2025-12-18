@@ -130,3 +130,4 @@ const BubbleMessage = ({
       </div>
     </React.Fragment>
   );
+};
