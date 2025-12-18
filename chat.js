@@ -224,7 +224,7 @@ const ChatView = ({
       bottom: 0,
       zIndex: 2,
       background: '#f5f5f5',
-      backgroundImage: 'url(https://i.ibb.co/tMcNm2rY/Screenshot-20251206-103640.jpg)',
+      backgroundImage: 'url(https://i.ibb.co/m5sz7vGS/images-1-5.jpg)',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
