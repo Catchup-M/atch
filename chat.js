@@ -220,7 +220,7 @@ const ChatView = ({
       bottom: 0,
       zIndex: 2,
       background: '#f5f5f5',
-      backgroundImage: 'url(https://i.ibb.co/1GJJCQRc/telegram-jumbled-symbols-aud1j88vumctm57w-1.jpg)',
+      backgroundImage: 'url(https://i.ibb.co/4Zvy60hm/Screenshot-20251219-112846.jpg)',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
