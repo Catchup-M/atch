@@ -1,0 +1,402 @@
+// bubble.js
+
+const BubbleMessage = ({
+  msg,
+  swipedMessage,
+  setSwipedMessage,
+  index,
+  handleTouchStart,
+  handleTouchMove,
+  handleTouchEnd,
+  openImageViewer,
+  messages,
+  isHighlighted,
+  onReplyClick
+}) => {
+  const isLongMessage = msg.text && msg.text.length > 50;
+  const isMediumMessage = msg.text && msg.text.length > 30 && msg.text.length <= 50;
+  const isShortMessage = msg.text && msg.text.length <= 30;
+
+  const showDateBadge = index === 0 || (msg.date !== undefined && msg.date !== null && msg.date !== (msg.prevDate ?? null));
+
+  // Handle image click
+  const handleImageClick = (e) => {
+    e.stopPropagation();
+    
+    // Get all images from messages
+    const imageMessages = messages
+      .map((m, i) => ({ ...m, originalIndex: i }))
+      .filter(m => m.type === 'image');
+    
+    // Find current image index in the filtered array
+    const currentImageIndex = imageMessages.findIndex(m => m.originalIndex === index);
+    
+    // Extract image URLs
+    const imageUrls = imageMessages.map(m => m.imageUrl);
+    
+    // Determine sender
+    const sender = msg.sent ? 'You' : 'Daddy Steve';
+    
+    // Open image viewer - pass all image messages for sender tracking
+    if (openImageViewer) {
+      openImageViewer(imageUrls, currentImageIndex, sender, imageMessages);
+    }
+  };
+
+  return (
+    <React.Fragment key={index}>
+      {/* Date Badge */}
+      {showDateBadge && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: '12px',
+          marginTop: index === 0 ? '0' : '12px'
+        }}>
+          <div
+            className="date-badge"
+            style={{
+              background: 'rgba(0, 0, 0, 0.5)',
+              color: '#fff',
+              padding: '4px 12px',
+              borderRadius: '12px',
+              fontSize: '13px',
+              fontWeight: '500'
+            }}
+          >
+            {msg.date}
+          </div>
+        </div>
+      )}
+
+      {/* Message Bubble */}
+      <div
+        className="message-bubble"
+        onTouchStart={(e) => handleTouchStart(e, index)}
+        onTouchMove={(e) => handleTouchMove(e, index, msg.sent)}
+        onTouchEnd={(e) => handleTouchEnd(e, index)}
+        style={{
+          display: 'flex',
+          justifyContent: msg.sent ? 'flex-end' : 'flex-start',
+          marginBottom: '8px',
+          transform: swipedMessage?.index === index ? `translateX(${swipedMessage.offset}px)` : 'translateX(0)',
+          transition: swipedMessage?.index === index ? 'none' : 'transform 0.2s ease',
+          position: 'relative',
+          marginLeft: isHighlighted ? '-18px' : '0',
+          marginRight: isHighlighted ? '-18px' : '0',
+          paddingLeft: isHighlighted ? '18px' : '0',
+          paddingRight: isHighlighted ? '18px' : '0'
+        }}
+      >
+        {/* Highlight indicator */}
+        {isHighlighted && (
+          <div style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            background: 'rgba(34, 197, 94, 0.35)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'fadeOut 10s ease-out'
+          }} />
+        )}
+        {/* Image Message */}
+        {msg.type === 'image' && (
+          <div 
+            onClick={handleImageClick}
+            style={{
+            background: msg.sent ? '#dcf8c6' : '#fff',
+            borderRadius: '12px',
+            padding: '4px',
+            maxWidth: '290px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+            cursor: 'pointer',
+            position: 'relative',
+            zIndex: 1
+          }}>
+            <div style={{
+              position: 'relative',
+              width: '100%',
+              height: '280px',
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}>
+              <img
+                src={msg.imageUrl}
+                alt="Message image"
+                draggable={false}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block'
+                }}
+              />
+              <div style={{
+                position: 'absolute',
+                bottom: '8px',
+                right: '8px',
+                background: 'rgba(0, 0, 0, 0.6)',
+                borderRadius: '10px',
+                padding: '4px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <span style={{
+                  fontSize: '13px',
+                  color: '#fff',
+                  fontWeight: '500'
+                }}>
+                  {msg.time}
+                </span>
+                {msg.sent && (
+                  <svg width="16" height="12" viewBox="0 0 48 48">
+                    <path fill="#fff" d="M40.6 12.1L17 35.7l-9.6-9.6L4.6 29L17 41.3l26.4-26.4z" />
+                  </svg>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Text Messages */}
+        {!msg.type && (
+          <>
+            {isLongMessage && (
+              <div style={{
+                background: msg.sent ? '#dcf8c6' : '#fff',
+                borderRadius: '12px',
+                padding: '8px 10px 4px 10px',
+                maxWidth: '290px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                position: 'relative',
+                zIndex: 1
+              }}>
+                {/* Reply Preview */}
+                {msg.replyTo && (
+                  <div 
+                    onClick={() => onReplyClick && onReplyClick(msg.replyTo.text)}
+                    style={{
+                    borderLeft: '3px solid ' + (msg.sent ? '#128C7E' : '#06cf9c'),
+                    paddingLeft: '8px',
+                    marginBottom: '6px',
+                    background: 'rgba(0,0,0,0.05)',
+                    borderRadius: '4px',
+                    padding: '6px 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer'
+                  }}>
+                    {/* Image Thumbnail in Reply */}
+                    {msg.replyTo.imageUrl && (
+                      <img
+                        src={msg.replyTo.imageUrl}
+                        alt="Reply preview"
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '6px',
+                          objectFit: 'cover',
+                          flexShrink: 0
+                        }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: msg.sent ? '#128C7E' : '#06cf9c', marginBottom: '2px' }}>
+                        {msg.replyTo.sender}
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {msg.replyTo.text}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div style={{ fontSize: '14px', lineHeight: '1.3' }}>
+                  {msg.text}
+                  <span style={{
+                    float: 'right',
+                    marginLeft: '6px',
+                    fontSize: '11px',
+                    color: '#6b7280',
+                    whiteSpace: 'nowrap',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    position: 'relative',
+                    bottom: '-3px'
+                  }}>
+                    {msg.time}
+                    {msg.sent && (
+                      <svg width="12" height="12" viewBox="0 0 48 48">
+                        <path fill="#43A047" d="M40.6 12.1L17 35.7l-9.6-9.6L4.6 29L17 41.3l26.4-26.4z" />
+                      </svg>
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {isMediumMessage && (
+              <div style={{
+                background: msg.sent ? '#dcf8c6' : '#fff',
+                borderRadius: '12px',
+                padding: '8px 10px',
+                maxWidth: '85%',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                position: 'relative',
+                zIndex: 1
+              }}>
+                {/* Reply Preview */}
+                {msg.replyTo && (
+                  <div 
+                    onClick={() => onReplyClick && onReplyClick(msg.replyTo.text)}
+                    style={{
+                    borderLeft: '3px solid ' + (msg.sent ? '#128C7E' : '#06cf9c'),
+                    paddingLeft: '8px',
+                    marginBottom: '6px',
+                    background: 'rgba(0,0,0,0.05)',
+                    borderRadius: '4px',
+                    padding: '6px 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer'
+                  }}>
+                    {/* Image Thumbnail in Reply */}
+                    {msg.replyTo.imageUrl && (
+                      <img
+                        src={msg.replyTo.imageUrl}
+                        alt="Reply preview"
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '6px',
+                          objectFit: 'cover',
+                          flexShrink: 0
+                        }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: msg.sent ? '#128C7E' : '#06cf9c', marginBottom: '2px' }}>
+                        {msg.replyTo.sender}
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {msg.replyTo.text}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '8px' }}>
+                  <span style={{ color: '#111', fontSize: '14px' }}>{msg.text}</span>
+                  <span style={{
+                    fontSize: '11px',
+                    color: '#6b7280',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {msg.time}
+                    {msg.sent && (
+                      <svg width="12" height="12" viewBox="0 0 48 48">
+                        <path fill="#43A047" d="M40.6 12.1L17 35.7l-9.6-9.6L4.6 29L17 41.3l26.4-26.4z" />
+                      </svg>
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {isShortMessage && (
+              <div style={{
+                background: msg.sent ? '#dcf8c6' : '#fff',
+                borderRadius: '12px',
+                padding: '8px 10px',
+                maxWidth: '85%',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                position: 'relative',
+                zIndex: 1
+              }}>
+                {/* Reply Preview */}
+                {msg.replyTo && (
+                  <div 
+                    onClick={() => onReplyClick && onReplyClick(msg.replyTo.text)}
+                    style={{
+                    borderLeft: '3px solid ' + (msg.sent ? '#128C7E' : '#06cf9c'),
+                    paddingLeft: '8px',
+                    marginBottom: '6px',
+                    background: 'rgba(0,0,0,0.05)',
+                    borderRadius: '4px',
+                    padding: '6px 8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    cursor: 'pointer'
+                  }}>
+                    {/* Image Thumbnail in Reply */}
+                    {msg.replyTo.imageUrl && (
+                      <img
+                        src={msg.replyTo.imageUrl}
+                        alt="Reply preview"
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '6px',
+                          objectFit: 'cover',
+                          flexShrink: 0
+                        }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: msg.sent ? '#128C7E' : '#06cf9c', marginBottom: '2px' }}>
+                        {msg.replyTo.sender}
+                      </div>
+                      <div style={{ fontSize: '13px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {msg.replyTo.text}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                  gap: '8px'
+                }}>
+                  <span style={{ color: '#111', fontSize: '14px', whiteSpace: msg.replyTo ? 'normal' : 'nowrap' }}>{msg.text}</span>
+                  <span style={{
+                    fontSize: '11px',
+                    color: '#6b7280',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {msg.time}
+                    {msg.sent && (
+                      <svg width="12" height="12" viewBox="0 0 48 48">
+                        <path fill="#43A047" d="M40.6 12.1L17 35.7l-9.6-9.6L4.6 29L17 41.3l26.4-26.4z" />
+                      </svg>
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </React.Fragment>
+  );
+};
